@@ -1,6 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 import { env } from '../config/env';
 import { LocalQueryBuilder, localDb } from './localStore';
+
+// Polyfill native WebSocket for Node versions without global.WebSocket (e.g. Node 20 on Render)
+if (typeof globalThis.WebSocket === 'undefined') {
+  (globalThis as any).WebSocket = WebSocket;
+}
 
 const isProduction = env.NODE_ENV === 'production';
 const hasConfiguredSupabase =

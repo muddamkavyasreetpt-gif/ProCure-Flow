@@ -234,19 +234,45 @@ git push -u origin main
 ## Deployment
 
 ### 1. Render (Backend Web Service)
+- **Service Type:** Web Service
+- **Environment:** Node
 - **Root Directory:** `server`
 - **Build Command:** `npm install --include=dev && npm run build`
 - **Start Command:** `npm start`
 - **Health Check Path:** `/api/health`
-- **Environment Variables:** Add every variable from `server/.env` (`PORT`, `NODE_ENV=production`, `CLIENT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `LLM_MODE`, `LLM_FALLBACK`, `LLM_RPM`, `LLM_CONCURRENCY`) plus `NODE_VERSION=20`.
+- **Node.js Version:** Configured automatically via `.node-version` (`22`) and `package.json` (`"engines": { "node": ">=22" }`). (Alternatively set Render Environment Variable `NODE_VERSION=22`).
+- **Environment Variables:**
+  | Variable | Value / Description |
+  |---|---|
+  | `PORT` | `5000` (or leave default for Render to assign) |
+  | `NODE_ENV` | `production` |
+  | `NODE_VERSION` | `22` |
+  | `CLIENT_URL` | Your frontend production URL (e.g. `https://procureflow.vercel.app` with **no trailing slash**) |
+  | `JWT_SECRET` | Strong 32+ character random string |
+  | `JWT_EXPIRES_IN` | `24h` |
+  | `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+  | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role key (server-only) |
+  | `SUPABASE_DB_URL` | Session pooler connection string (IPv4) from Supabase dashboard |
+  | `GEMINI_API_KEY` | Google AI Studio API key |
+  | `GEMINI_MODEL` | `gemini-2.5-flash` |
+  | `LLM_MODE` | `live` (or `mock` for deterministic test mode) |
+  | `LLM_FALLBACK` | `true` |
+  | `LLM_RPM` | `8` |
 
 ### 2. Vercel (Frontend SPA)
 - **Root Directory:** `client`
 - **Framework Preset:** `Vite`
-- **Environment Variable:** `VITE_API_BASE_URL` = your Render service URL with **no trailing slash** (e.g. `https://procureflow-api.onrender.com`).
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Environment Variables:**
+  | Variable | Value / Description |
+  |---|---|
+  | `VITE_API_BASE_URL` | Your Render service URL with **no trailing slash** (e.g. `https://procureflow-api.onrender.com`) |
+
+> **Note on SPA Routing:** `client/vercel.json` is already configured with `"routes": [{ "src": "/[^.]+", "dest": "/index.html" }]` so refreshing deep links like `/runs/:id` or `/requests/new` will never 404.
 
 ### 3. Post-Deploy CORS Alignment
-- Once both services are deployed, set `CLIENT_URL` on Render to your exact Vercel production origin (with **no trailing slash**, e.g. `https://procureflow.vercel.app`) and redeploy the latest commit on Render.
+- Once Vercel provides your frontend URL, update `CLIENT_URL` in your Render Environment settings to that exact URL (without trailing slash, e.g. `https://procureflow.vercel.app`) and click **Save Changes** (Render will automatically redeploy).
 
 ### 4. Free-Tier Notes
 - **Render:** Free web services sleep after 15 minutes of inactivity; the first request can take about a minute or two to wake up, so open `/api/health` before running a live demo or recording.
