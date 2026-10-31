@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# environment and secrets (keep only the examples)
+.env
+.env.*
+!.env.example
+
+# build output
+dist/
+build/
+.vite/
+*.tsbuildinfo
+coverage/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# deployment tooling
+.vercel/
+.render/
