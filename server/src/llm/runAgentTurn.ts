@@ -1,5 +1,5 @@
 import { ZodSchema } from 'zod';
-import { ai, MODEL, isLiveLLMConfigured } from './gemini';
+import { getAiClient, MODEL, isLiveLLMConfigured } from './gemini';
 import { acquireLLMCapacity } from './limiter';
 import { withRetry } from './retry';
 import { ToolDefinition, RegisteredTool, ToolContext } from '../tools/types';
@@ -85,6 +85,7 @@ export async function runAgentTurn<T>(
       let response: any;
       const callStart = Date.now();
       try {
+        const ai = await getAiClient();
         response = await withRetry(() =>
           ai.models.generateContent({
             model: MODEL,
@@ -224,6 +225,7 @@ export async function runAgentTurn<T>(
       const cap = await acquireLLMCapacity();
       const callStart = Date.now();
       try {
+        const ai = await getAiClient();
         const finalResp = await withRetry(() =>
           ai.models.generateContent({
             model: MODEL,

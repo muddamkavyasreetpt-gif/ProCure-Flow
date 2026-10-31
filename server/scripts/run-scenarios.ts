@@ -153,6 +153,25 @@ async function waitForRunPauseOrFinish(
   throw new Error(`Timeout waiting for run ${runId}`);
 }
 
+async function waitForRunTerminal(
+  token: string,
+  runId: string,
+  timeoutMs = 180000
+): Promise<any> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const { status, data } = await apiRequest('GET', `/runs/${runId}`, { token });
+    if (status === 200 && data?.run) {
+      const runStatus = data.run.status;
+      if (['completed', 'rejected', 'failed'].includes(runStatus)) {
+        return data;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new Error(`Timeout waiting for terminal status on run ${runId}`);
+}
+
 async function runScenario1(): Promise<void> {
   console.log('\n--- Scenario 1: 20 Ergonomic Office Chairs (Manager Escalation & Approval) ---');
   const empToken = await loginUser('employee@procureflow.demo');
@@ -196,9 +215,8 @@ async function runScenario1(): Promise<void> {
     if (decideRes.status !== 200) {
       throw new Error(`Manager approval failed: ${JSON.stringify(decideRes.data)}`);
     }
-    // Wait briefly for async resume to finish
-    await new Promise((r) => setTimeout(r, 150));
-    completedData = await waitForRunPauseOrFinish(empToken, runId);
+    // Wait for async resume to finish to terminal status
+    completedData = await waitForRunTerminal(empToken, runId);
   }
 
   const poTotal = Number(completedData.purchaseOrder?.total_amount ?? 0);
@@ -257,8 +275,7 @@ async function runScenario2(): Promise<void> {
     if (decideRes.status !== 200) {
       throw new Error(`Finance approval failed: ${JSON.stringify(decideRes.data)}`);
     }
-    await new Promise((r) => setTimeout(r, 150));
-    completedData = await waitForRunPauseOrFinish(empToken, runId);
+    completedData = await waitForRunTerminal(empToken, runId);
     scenario2RunData = completedData;
   }
 
